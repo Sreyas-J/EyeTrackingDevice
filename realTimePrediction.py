@@ -3,7 +3,7 @@ import joblib
 import numpy as np
 import psutil
 
-# Set process priority to high and assign to CPU core 0 for better performance
+# Set process priority to high and assign to CPU core 0
 p = psutil.Process()
 p.nice(psutil.HIGH_PRIORITY_CLASS)
 p.cpu_affinity([0])
@@ -22,16 +22,6 @@ data_buffer = []
 rcl_pos = 1
 ucd_pos = 1
 b_time = -1
-track_rcl = []
-track_ucd = []
-track_b = []
-
-# Function to check for consistent predictions in the last 5 entries
-def consistent_prediction(predictions, state, val):
-    if len(predictions) < 5:
-        return False
-    predictions = predictions[-5:]
-    return predictions.count(state) >= val
 
 # Open serial ports for data reading
 ser1 = serial.Serial(port='COM17', baudrate=2000000, timeout=1)
@@ -61,7 +51,6 @@ try:
         timestamp = (float(line1[0]) + float(line2[0])) / 2
         line = [timestamp, line1[1], line2[1]]
 
-        # Check for invalid or incomplete data
         if len(line) != 3 or not all(line):
             print("Incomplete or invalid data received:", line)
             if last_valid_line:
@@ -92,52 +81,40 @@ try:
             UCD = UCD_model.predict(row1)[0]
             B = B_model.predict(row1)[0]
 
-            # Track predictions for consistency checks
-            track_rcl.append(RCL)
-            track_ucd.append(UCD)
-            track_b.append(B)
-
-            # Process predictions if the timestamp is greater than 6 seconds
             if timestamp > 6:
                 # Check and send consistent RCL predictions
                 if RCL != 1:
-                    if timestamp - b_time >= 1 and consistent_prediction(track_rcl, RCL, 3):
-                        b_time = timestamp
-                        if rcl_pos != 2 and RCL == 2:
-                            rcl_pos += 1
-                        if rcl_pos != 0 and RCL == 0:
-                            rcl_pos -= 1
+                    if rcl_pos != 2 and RCL == 2:
+                        rcl_pos += 1
+                    if rcl_pos != 0 and RCL == 0:
+                        rcl_pos -= 1
 
-                        if rcl_pos == 0:
-                            position = "Left\n"
-                        elif rcl_pos == 1:
-                            position = "Horizontal centre\n"
-                        elif rcl_pos == 2:
-                            position = "Right\n"
-                        print(position)
+                    if rcl_pos == 0:
+                        position = "Left\n"  
+                    elif rcl_pos == 1:
+                        position = "Horizontal centre\n"  
+                    elif rcl_pos == 2:
+                        position = "Right\n"  
+                    print(position)
 
-                # Check and send consistent blink predictions
-                elif B == 1:
-                    if consistent_prediction(track_b, B, 4) and timestamp - b_time >= 1:
-                        b_time = timestamp
-                        print("Blink\n")
+                if B == 1:
+                    print("Blink\n")
 
                 # Check and send consistent UCD predictions
                 if UCD != 1:
-                    if timestamp - b_time >= 1 and consistent_prediction(track_ucd, UCD, 3):
-                        b_time = timestamp
-                        if ucd_pos != 2 and UCD == 2:
-                            ucd_pos += 1
-                        if ucd_pos != 0 and UCD == 0:
-                            ucd_pos -= 1
+                    if ucd_pos != 2 and UCD == 2:
+                        ucd_pos += 1
+                    if ucd_pos != 0 and UCD == 0:
+                        ucd_pos -= 1
 
-                        if ucd_pos == 0:
-                            position = "Down\n"
-                        elif ucd_pos == 1:
-                            position = "Vertical centre\n"
-                        elif ucd_pos == 2:
-                            position = "Up\n"
-                        print(position)
+                    if ucd_pos == 0:
+                        position = "Down\n"
+                    elif ucd_pos == 1:
+                        position = "Vertical centre\n"  # Vertical hold
+                    elif ucd_pos == 2:
+                        position = "Up\n"  # Up
+
+                    print(position)
 
             # Shift the buffer to remove the processed data
             data_buffer = data_buffer[shift:]
