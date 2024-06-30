@@ -90,15 +90,15 @@ try:
                         rcl_pos -= 1
 
                     if rcl_pos == 0:
-                        position = "Left\n"  
+                        position = "Left"  
                     elif rcl_pos == 1:
-                        position = "Horizontal centre\n"  
+                        position = "Horizontal centre"  
                     elif rcl_pos == 2:
-                        position = "Right\n"  
+                        position = "Right"  
                     print(position)
 
                 if B == 1:
-                    print("Blink\n")
+                    print("Blink")
 
                 # Check and send consistent UCD predictions
                 if UCD != 1:
@@ -108,11 +108,11 @@ try:
                         ucd_pos -= 1
 
                     if ucd_pos == 0:
-                        position = "Down\n"
+                        position = "Down"
                     elif ucd_pos == 1:
-                        position = "Vertical centre\n"  # Vertical hold
+                        position = "Vertical centre"  # Vertical hold
                     elif ucd_pos == 2:
-                        position = "Up\n"  # Up
+                        position = "Up"  # Up
 
                     print(position)
 
